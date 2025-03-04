@@ -49,7 +49,7 @@ ARGUMENT_STYLES = [
 
 # Modelo de datos para la API
 class MessageRequest(BaseModel):
-    conversation_id: Optional[str]
+    conversation_id: Optional[str] = None
     message: str
 
 # Guardar conversación en Firestore
