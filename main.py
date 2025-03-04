@@ -128,7 +128,7 @@ def chat(request: MessageRequest):
     conversation_id = request.conversation_id or f"conv_{random.randint(1000, 9999)}"
     user_message = request.message
 
-    bot_response = generate_response(user_message, conversation_id)
+    bot_response, conversation_id  = generate_response(user_message, conversation_id)
     messages = load_conversation_from_firestore(conversation_id)
 
     messages.append({"role": "user", "message": user_message})
