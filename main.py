@@ -12,4 +12,4 @@ def read_root():
 
 @app.post("/chat")
 def chat(request: ChatRequest):
-    return {"response": f"You said: {message}"}
+    return {"response": f"You said: {request.message}"}
