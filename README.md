@@ -179,7 +179,7 @@ This will validate:
 
 Here is a screenshot of a conversation with the bot in action:
 
-![AI Debate Bot en acción](ai-bot-in-action.png)
+![AI Debate Bot en acción](ai-in-action.png)
 
 You can also test the bot using the following command:
 
