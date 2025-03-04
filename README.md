@@ -147,33 +147,59 @@ If provided, the bot will remember the previous messages in that conversation.
    make clean
    ```
 
-### Running with ngrok (Public API URL)
-1. Authenticate ngrok with your Pro accoun
-   ```sh
-   ngrok authtoken <YOUR_NGROK_AUTH_TOKEN>
-   ```
-2. Start ngrok with a fixed subdomain:
-   ```sh
-   make run-ngrok
-   ```
-3. Test the API using:
-   ```sh
-   curl -X POST "https://ai-debate-bot.ngrok.io/chat" \
-   -H "Content-Type: application/json" \
-   -d '{"message": "Tell me why Dior Sauvage is the best!"}'
-   ```
-4. Access the interactive API documentation:
-- **Open https://ai-debate-bot.ngrok.io/docs in your browser.**
+### Exposing the API with ngrok
+If you need to expose the API for external access, use ngrok:
 
-## Testing
-Run the test suite using:
+   ```sh
+ngrok http --subdomain=ai-debate-bot 8000
+   ```
+Once started, you can access the API at:
+   ```sh
+https://ai-debate-bot.ngrok.io/
+   ```
+You can then test it using:
+   ```sh
+curl -X POST "https://ai-debate-bot.ngrok.io/chat" \
+-H "Content-Type: application/json" \
+-d '{"message": "Tell me why Dior Sauvage is the best!"}'
+   ```
+To access the interactive API documentation:
+
+Open https://ai-debate-bot.ngrok.io/docs in your browser.
+
+## Automated Testing with Pytest
+To ensure the API behaves correctly, we have implemented four automated tests using pytest. These tests cover different edge cases and functionalities.
 ```sh
 make test
 ```
-This will validate:
-- **Consistency of arguments**
-- **Response persuasiveness**
-- **Correct tracking of conversation history**
+or manually with
+```sh
+pytest
+```
+### Implemented Tests
+
+The following tests validate different API behaviors:
+
+✅ Test 1: Basic Chat Response
+
+- ✔️ Ensures that sending a valid message returns a correct response.
+- ✔️ Verifies that a conversation ID is assigned.
+- ✔️ Checks that the response structure includes a messages list.
+
+❌ Test 2: Handling Empty Messages
+
+- ✔️ Ensures the API rejects empty messages with a 400 Bad Request error.
+
+✅ Test 3: Maintaining Conversation History
+
+- ✔️ Ensures that multiple messages within the same conversation retain the same conversation ID.
+- ✔️ Confirms that the API maintains history for long conversations.
+
+✅ Test 4: Debate Bot Adapts to Multi-Turn Conversations
+
+- ✔️ Ensures the bot does not change its stance throughout a long conversation.
+- ✔️ Verifies that argument styles remain consistent during multiple exchanges.
+
 
 ## Example Usage
 
@@ -181,13 +207,6 @@ Here is a screenshot of a conversation with the bot in action:
 
 ![AI Debate Bot en acción](ai-in-action.png)
 
-You can also test the bot using the following command:
-
-```sh
-curl -X POST "https://ai-debate-bot.ngrok.io/chat" \
--H "Content-Type: application/json" \
--d '{"message": "Is expensive perfume worth it?"}'
-```
 
 ## Conclusion
 This project successfully meets all the requirements of the tech challenge by implementing a **fast, persuasive, and structured AI debate bot** with **automated deployment and testing**. It supports multiple argument styles and topics while maintaining a logical flow of conversation stored in Firebase Firestore.
