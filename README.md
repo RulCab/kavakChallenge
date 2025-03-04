@@ -3,6 +3,15 @@
 ## Overview
 This project implements an AI-powered debate bot using **FastAPI**, **Google Gemini API**, and **Firebase Firestore**. The bot is designed to engage in persuasive debates while maintaining a strong stance on a given topic.
 
+## Getting Started
+
+First, clone this repository:
+
+```sh
+git clone https://github.com/RulCab/kavakChallenge.git
+cd kavakChallenge
+```
+
 ## Features
 - **Maintains a consistent argument**: The bot never changes its position, regardless of user input.
 - **Persuasive responses**: Uses different argumentation styles (historical, scientific, emotional, sarcastic) to convince the user.
@@ -163,6 +172,11 @@ Here is a screenshot of a conversation with the bot in action:
 
 ![AI Debate Bot en acción](ai-bot-in-action.png)
 
+You can also test the bot using the following command:
+
+```sh
+curl -X POST "http://localhost:8000/chat" -H "Content-Type: application/json" -d '{"conversation_id": "conv_1234", "message": "Is expensive perfume worth it?"}'
+```
 
 ## Conclusion
 This project successfully meets all the requirements of the tech challenge by implementing a **fast, persuasive, and structured AI debate bot** with **automated deployment and testing**. It supports multiple argument styles and topics while maintaining a logical flow of conversation stored in Firebase Firestore.
