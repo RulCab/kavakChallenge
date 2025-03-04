@@ -32,16 +32,43 @@ A `Makefile` is provided to simplify the installation, execution, and testing of
 - `make down` - Stops all running services.
 - `make clean` - Removes all Docker containers and related services.
 
-## Environment Variables
-To run the service, you need to set the following environment variables in a `.env` file:
+## Environment Variables Setup
+To run this service, you need to create a `.env` file in the root directory with the following environment variables:
 
 ```sh
 GEMINI_API_KEY=your_gemini_api_key
-FIREBASE_CREDENTIALS=/app/api-bot-af0af-firebase-adminsdk-fbsvc-a6b2971832.json
+FIREBASE_CREDENTIALS=/app/your_firebase_credentials.json
 NGROK_AUTH_TOKEN=your_ngrok_token
 ```
 
-Additionally, **move your Firebase credentials JSON file** to the root directory of the project and ensure it is referenced correctly in both the `.env` file and `docker-compose.yml`.
+Here's how you can obtain them:
+
+- **GEMINI_API_KEY**:  
+  1. Visit [Google AI Studio](https://aistudio.google.com/) and sign in with your Google account.  
+  2. Create a new project and enable the **Gemini API**.  
+  3. Generate an API key and copy it into your `.env` file.
+
+- **FIREBASE_CREDENTIALS**:  
+  1. Go to [Firebase Console](https://console.firebase.google.com/) and create a new project.  
+  2. Navigate to **Project Settings > Service Accounts**.  
+  3. Click **Generate new private key**, and save the `.json` file in the root directory of your project.  
+  4. Ensure your `.env` file references it as `/app/your_firebase_credentials.json`.  
+  5. Update `docker-compose.yml` to mount the file inside the container:
+     ```yaml
+     volumes:
+       - ./your_firebase_credentials.json:/app/your_firebase_credentials.json
+     ```
+
+- **NGROK_AUTH_TOKEN**:  
+  1. Sign up at [Ngrok](https://ngrok.com/) and log in.  
+  2. Go to your dashboard and copy your authentication token.  
+  3. Add it to your `.env` file.
+
+Once the `.env` file is set up, you can proceed with running the service using Docker:
+
+```sh
+make run
+```
 
 ## API Endpoint
 ### `POST /chat`
@@ -122,16 +149,18 @@ services:
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
     container_name: ai-debate-bot
     environment:
-      - FIREBASE_CREDENTIALS=/app/api-bot-af0af-firebase-adminsdk-fbsvc-a6b2971832.json
+      - FIREBASE_CREDENTIALS=/app/your_firebase_credentials.json
     ports:
       - "8000:8000"
     volumes:
       - .:/app
-      - ./api-bot-af0af-firebase-adminsdk-fbsvc-a6b2971832.json:/app/api-bot-af0af-firebase-adminsdk-fbsvc-a6b2971832.json
+      - ./your_firebase_credentials.json:/app/your_firebase_credentials.json
 ```
 
 ## Conclusion
 This project successfully meets all the requirements of the tech challenge by implementing a **fast, persuasive, and structured AI debate bot** with **automated deployment and testing**. It supports multiple argument styles and topics while maintaining a logical flow of conversation stored in Firebase Firestore.
+
+
 
 
 
