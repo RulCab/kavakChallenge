@@ -74,6 +74,8 @@ def generate_gemini_response(topic, user_message, argument_style):
         - Extend the conversation: Encourage further discussion by asking questions or introducing new angles.
         - Respond quickly: Keep responses concise but meaningful, and ensure they fit within the 30-second API limit.
         - Your argument style is: **{argument_style}**. Stick to this tone throughout the conversation.
+        - Avoid repeating the same arguments in consecutive responses**. Instead, introduce new supporting points or counter-arguments.
+        - If the user asks for alternatives, provide at least two examples that align with the debate stance**.
 
         **Conversation so far:**
         User: {user_message}
