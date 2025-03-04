@@ -9,6 +9,8 @@ This project implements an AI-powered debate bot using **FastAPI**, **Google Gem
 - **Conversation persistence**: Previous messages are stored in Firebase Firestore to maintain a logical flow.
 - **Handles long discussions**: The bot supports conversations exceeding ten messages, up to a maximum of 9 interactions (can be adjusted).
 - **Response time optimization**: Ensures responses are generated within **30 seconds**.
+- **Multiple debate topics**: The bot debates on various **perfumery-related topics**, including fragrance pricing, seasonal suitability, and niche vs. designer scents.
+- **Different argument styles**: The bot can argue using **historical, scientific, emotional, or sarcastic** tones.
 
 ## Technologies Used
 - **FastAPI**: Backend framework for handling API requests.
@@ -35,9 +37,11 @@ To run the service, you need to set the following environment variables in a `.e
 
 ```sh
 GEMINI_API_KEY=your_gemini_api_key
-FIREBASE_CREDENTIALS=your_firebase_credentials.json
+FIREBASE_CREDENTIALS=/app/api-bot-af0af-firebase-adminsdk-fbsvc-a6b2971832.json
 NGROK_AUTH_TOKEN=your_ngrok_token
 ```
+
+Additionally, **move your Firebase credentials JSON file** to the root directory of the project and ensure it is referenced correctly in both the `.env` file and `docker-compose.yml`.
 
 ## API Endpoint
 ### `POST /chat`
@@ -57,7 +61,7 @@ Handles user messages and generates AI responses.
 ```json
 {
   "conversation_id": "unique_id_for_the_conversation",
-  "message": [
+  "messages": [
     {"role": "user", "message": "User's input"},
     {"role": "bot", "message": "AI-generated response"}
   ]
@@ -104,6 +108,30 @@ This will validate:
 - **Response persuasiveness**
 - **Correct tracking of conversation history**
 
+## Modifications in `docker-compose.yml`
+For the bot to work correctly, update your `docker-compose.yml` to include the Firebase credentials JSON file as a volume:
+
+```yaml
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+    container_name: ai-debate-bot
+    environment:
+      - FIREBASE_CREDENTIALS=/app/api-bot-af0af-firebase-adminsdk-fbsvc-a6b2971832.json
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ./api-bot-af0af-firebase-adminsdk-fbsvc-a6b2971832.json:/app/api-bot-af0af-firebase-adminsdk-fbsvc-a6b2971832.json
+```
+
 ## Conclusion
-This project successfully meets all the requirements of the tech challenge by implementing a **fast, persuasive, and structured AI debate bot** with **automated deployment and testing**. 
+This project successfully meets all the requirements of the tech challenge by implementing a **fast, persuasive, and structured AI debate bot** with **automated deployment and testing**. It supports multiple argument styles and topics while maintaining a logical flow of conversation stored in Firebase Firestore.
+
+
 
