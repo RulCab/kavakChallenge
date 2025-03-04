@@ -97,8 +97,8 @@ def generate_gemini_response(topic, user_message, argument_style):
 
 # Generar respuesta completa
 def generate_response(user_message: str, conversation_id: Optional[str]) -> str:
-    if conversation_id is None:
-        conversation_id = f"conv_{random.randint(1000, 9999)}"
+    if not conversation_id:
+        conversation_id = f"conv_{random.randint(1, 9999)}"
 
     messages = load_conversation_from_firestore(conversation_id)
 
@@ -117,11 +117,14 @@ def generate_response(user_message: str, conversation_id: Optional[str]) -> str:
 
     messages.append({"role": "bot", "message": bot_response})
     save_conversation_to_firestore(conversation_id, messages)
-    return bot_response
+    return bot_response, conversation_id  
 
 # Endpoint para chatear
 @app.post("/chat")
 def chat(request: MessageRequest):
+    if not request.message.strip():  # Validar mensaje vacío
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
+    
     conversation_id = request.conversation_id or f"conv_{random.randint(1000, 9999)}"
     user_message = request.message
 
