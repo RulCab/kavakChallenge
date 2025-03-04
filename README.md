@@ -73,6 +73,29 @@ Here's how you can obtain them:
   2. Go to your dashboard and copy your authentication token.  
   3. Add it to your `.env` file.
 
+## Modifications in `docker-compose.yml`
+For the bot to work correctly, update your `docker-compose.yml` to include the Firebase credentials JSON file as a volume:
+
+```yaml
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+    container_name: ai-debate-bot
+    environment:
+      - FIREBASE_CREDENTIALS=/app/your_firebase_credentials.json
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ./your_firebase_credentials.json:/app/your_firebase_credentials.json
+```
+
+
 Once the `.env` file is set up, you can proceed with running the service using Docker:
 
 ```sh
@@ -80,6 +103,10 @@ make run
 ```
 
 ## API Endpoint
+
+The API is publicly accessible at:
+https://ai-debate-bot.ngrok.io/
+
 ### `POST /chat`
 Handles user messages and generates AI responses.
 
@@ -90,7 +117,8 @@ Handles user messages and generates AI responses.
   "message": "User's input message"
 }
 ```
-- `conversation_id` (optional): Allows the API to track ongoing debates.
+- `conversation_id` (optional): If not provided, the API will create a new conversation ID.
+If provided, the bot will remember the previous messages in that conversation.
 - `message`: The user's message to the bot.
 
 #### Response:
@@ -119,20 +147,23 @@ Handles user messages and generates AI responses.
    make clean
    ```
 
-### Running Locally (Without Docker)
-1. Install dependencies:
+### Running with ngrok (Public API URL)
+1. Authenticate ngrok with your Pro accoun
    ```sh
-   make install
+   ngrok authtoken <YOUR_NGROK_AUTH_TOKEN>
    ```
-2. Start the FastAPI server:
+2. Start ngrok with a fixed subdomain:
    ```sh
-   uvicorn main:app --host 0.0.0.0 --port 8000
+   make run-ngrok
    ```
-3. Start ngrok:
+3. Test the API using:
    ```sh
-   ngrok http 8000
+   curl -X POST "https://ai-debate-bot.ngrok.io/chat" \
+   -H "Content-Type: application/json" \
+   -d '{"message": "Tell me why Dior Sauvage is the best!"}'
    ```
-4. Use the generated ngrok URL to interact with the bot.
+4. Access the interactive API documentation:
+- **Open https://ai-debate-bot.ngrok.io/docs in your browser.**
 
 ## Testing
 Run the test suite using:
@@ -144,28 +175,6 @@ This will validate:
 - **Response persuasiveness**
 - **Correct tracking of conversation history**
 
-## Modifications in `docker-compose.yml`
-For the bot to work correctly, update your `docker-compose.yml` to include the Firebase credentials JSON file as a volume:
-
-```yaml
-version: '3.8'
-
-services:
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-    container_name: ai-debate-bot
-    environment:
-      - FIREBASE_CREDENTIALS=/app/your_firebase_credentials.json
-    ports:
-      - "8000:8000"
-    volumes:
-      - .:/app
-      - ./your_firebase_credentials.json:/app/your_firebase_credentials.json
-```
-
 ## Example Usage
 
 Here is a screenshot of a conversation with the bot in action:
@@ -175,7 +184,9 @@ Here is a screenshot of a conversation with the bot in action:
 You can also test the bot using the following command:
 
 ```sh
-curl -X POST "http://localhost:8000/chat" -H "Content-Type: application/json" -d '{"conversation_id": "conv_1234", "message": "Is expensive perfume worth it?"}'
+curl -X POST "https://ai-debate-bot.ngrok.io/chat" \
+-H "Content-Type: application/json" \
+-d '{"message": "Is expensive perfume worth it?"}'
 ```
 
 ## Conclusion
