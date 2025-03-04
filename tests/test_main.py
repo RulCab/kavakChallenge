@@ -54,7 +54,11 @@ def test_long_conversation():
     conversation_id = None
 
     for msg in messages:
-        response = client.post("/chat", json={"message": msg})
+        payload = {"message": msg}
+        if conversation_id is not None:
+            payload["conversation_id"] = conversation_id
+        
+        response = client.post("/chat", json=payload)
         assert response.status_code == 200
         assert "conversation_id" in response.json()
         assert "messages" in response.json()
