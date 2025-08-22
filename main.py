@@ -3,7 +3,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import google.generativeai as genai
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, constr
 from typing import Optional
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -39,8 +39,8 @@ ARGUMENT_STYLES = [
 ]
 
 class MessageRequest(BaseModel):
-    conversation_id: Optional[str]
-    message: str
+    conversation_id: Optional[str] = None
+    message: constr(strip_whitespace=True, min_length=1)
 
 def save_conversation(cid, msgs):
     db.collection("conversations").document(cid).set({"messages": msgs})
