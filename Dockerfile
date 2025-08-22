@@ -1,17 +1,21 @@
-# Usar una imagen base de Python
-FROM python:3.9
+# Usa una imagen ligera de Python
+FROM python:3.11-slim
 
-# Establecer el directorio de trabajo en el contenedor
+# Crea un directorio de trabajo
 WORKDIR /app
 
-# Copiar los archivos del proyecto al contenedor
-COPY . .
+# Copia requirements.txt primero para instalar dependencias
+COPY requirements.txt .
 
-# Instalar dependencias
+# Instala dependencias sin caché
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Exponer el puerto 8000 para FastAPI
-EXPOSE 8000
+# Copia el resto del código al contenedor
+COPY . .
 
-# Comando para ejecutar la aplicación
+# Variable de entorno para el puerto
+ENV PORT=8000
+
+# Comando que Render ejecutará para levantar FastAPI
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
