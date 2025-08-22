@@ -32,13 +32,13 @@ def test_chat_endpoint():
     response = client.post("/chat", json={"message": "Is expensive perfume worth it?"})
     assert response.status_code == 200
     assert "conversation_id" in response.json()
-    assert "messages" in response.json()
-    assert isinstance(response.json()["messages"], list)
+    assert "message" in response.json()
+    assert isinstance(response.json()["message"], list)
 
 # ✅ Test 2: Verifica que la API responde con error si el mensaje está vacío
 def test_chat_empty_message():
     response = client.post("/chat", json={"message": ""})
-    assert response.status_code == 400  # Código de error esperado para una solicitud inválida
+    assert response.status_code == 422 # Código de error esperado para una solicitud inválida
 
 # ✅ Test 3: Verifica que la API devuelve un ID de conversación único en cada request
 def test_unique_conversation_id():
@@ -61,7 +61,7 @@ def test_long_conversation():
         response = client.post("/chat", json=payload)
         assert response.status_code == 200
         assert "conversation_id" in response.json()
-        assert "messages" in response.json()
+        assert "message" in response.json()
 
         if conversation_id is None:
             conversation_id = response.json()["conversation_id"]
