@@ -1,69 +1,66 @@
-from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
-import sys
+# tests/test_main.py
 import os
+from unittest.mock import patch, MagicMock
+from fastapi.testclient import TestClient
 
-import logging
+# Env vars falsas para que main.py no truene al importar
+os.environ["GEMINI_API_KEY"] = "test-key"
+os.environ["FIREBASE_CREDENTIALS"] = "/tmp/fake-creds.json"
 
-logging.getLogger("google.auth.transport").setLevel(logging.CRITICAL)
-
-# Agregar la raíz del proyecto al path de Python
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-# Mock de Firestore
-mock_firestore = MagicMock()
-mock_firestore.collection.return_value.document.return_value.get.return_value.to_dict.return_value = {
-    "messages": []
-}
-
-
-with patch("firebase_admin.credentials.Certificate") as mock_cert, \
+# Parches ANTES de importar main
+with patch("os.path.exists", return_value=True), \
+     patch("firebase_admin.credentials.Certificate") as mock_cert, \
      patch("firebase_admin.initialize_app") as mock_init, \
-     patch("firebase_admin.firestore.client", return_value=mock_firestore):
+     patch("firebase_admin.firestore.client") as mock_fs, \
+     patch("google.generativeai.GenerativeModel") as mock_model:
 
     mock_cert.return_value = MagicMock()
-    mock_init.return_value = MagicMock()  # Evita que Firebase se inicialice
+    mock_init.return_value = MagicMock()
 
-    from main import app  # Importar después del mock
+    # Firestore simulado
+    fake_db = MagicMock()
+    fake_doc = MagicMock()
+    fake_doc.get.return_value.exists = False
+    fake_doc.get.return_value.to_dict.return_value = {"messages": []}
+    fake_db.collection.return_value.document.return_value = fake_doc
+    mock_fs.return_value = fake_db
+
+    # Gemini simulado
+    mock_instance = MagicMock()
+    mock_instance.generate_content.return_value.text = "Stubbed bot answer"
+    mock_model.return_value = mock_instance
+
+    from main import app  # importa después de parchear todo
 
 client = TestClient(app)
 
 def test_chat_endpoint():
-    response = client.post("/chat", json={"message": "Is expensive perfume worth it?"})
-    assert response.status_code == 200
-    assert "conversation_id" in response.json()
-    assert "message" in response.json()
-    assert isinstance(response.json()["message"], list)
+    r = client.post("/chat", json={"message": "Is expensive perfume worth it?"})
+    assert r.status_code == 200
+    data = r.json()
+    assert "conversation_id" in data
+    assert "message" in data and isinstance(data["message"], list)
 
-# ✅ Test 2: Verifica que la API responde con error si el mensaje está vacío
 def test_chat_empty_message():
-    response = client.post("/chat", json={"message": ""})
-    assert response.status_code == 422 # Código de error esperado para una solicitud inválida
+    r = client.post("/chat", json={"message": ""})
+    assert r.status_code == 422
 
-# ✅ Test 3: Verifica que la API devuelve un ID de conversación único en cada request
 def test_unique_conversation_id():
-    response1 = client.post("/chat", json={"message": "First message"})
-    response2 = client.post("/chat", json={"message": "Second message"})
-    assert response1.status_code == 200
-    assert response2.status_code == 200
-    assert response1.json()["conversation_id"] != response2.json()["conversation_id"]
+    r1 = client.post("/chat", json={"message": "First message"})
+    r2 = client.post("/chat", json={"message": "Second message"})
+    assert r1.status_code == 200 and r2.status_code == 200
+    assert r1.json()["conversation_id"] != r2.json()["conversation_id"]
 
-# ✅ Test 4: Probar una conversación más larga con múltiples mensajes
 def test_long_conversation():
-    messages = ["Hello", "How are you?", "Tell me about perfumes", "Bye!"]
-    conversation_id = None
-
-    for msg in messages:
-        payload = {"message": msg}
-        if conversation_id is not None:
-            payload["conversation_id"] = conversation_id
-        
-        response = client.post("/chat", json=payload)
-        assert response.status_code == 200
-        assert "conversation_id" in response.json()
-        assert "message" in response.json()
-
-        if conversation_id is None:
-            conversation_id = response.json()["conversation_id"]
+    msgs = ["Hello", "How are you?", "Tell me about perfumes", "Bye!"]
+    cid = None
+    for m in msgs:
+        payload = {"message": m}
+        if cid: payload["conversation_id"] = cid
+        r = client.post("/chat", json=payload)
+        assert r.status_code == 200
+        if not cid:
+            cid = r.json()["conversation_id"]
         else:
-            assert conversation_id == response.json()["conversation_id"]  # Asegurar que es la misma conversación
+            assert r.json()["conversation_id"] == cid
+
