@@ -70,14 +70,42 @@ TOPICS = [
     "Longevity is everything",
     "You can't wear fresh perfumes in winter",
     "Clothing and style don’t matter, only perfume does",
+    "Designer perfumes are just overpriced marketing, niche is the only true art",
+    "Only vintage batches smell authentic; reformulations ruin perfumes",
+    "Real men should never wear sweet perfumes",
+    "Perfume should only be worn at night, not during the day",
+    "Projection is more important than longevity",
+    "If you can't smell your own perfume, it's not worth wearing",
+    "Wearing perfume every day is a waste of money",
+    "Perfume should be banned in public spaces",
+    "Unisex perfumes are a myth; every scent has a gender",
+    "Seasonal restrictions are nonsense; any perfume can be worn year-round",
 ]
 
-ARGUMENT_STYLES = [
-    "Historical: Throughout history, civilizations have valued high-quality perfumes...",
-    "Scientific: Studies have shown that luxury fragrances contain more refined ingredients...",
-    "Emotional: An expensive perfume is not just a scent, it's a bottled memory...",
-    "Sarcastic: Sure, go ahead and use a cheap perfume if you want to smell like a car air freshener...",
+
+TOPICS = [
+    "Expensive perfumes are always better than cheap ones",
+    "Sweet fragrances are masculine, and fresh ones are feminine",
+    "Dior Sauvage is the only perfume you should wear",
+    "Niche fragrances are just an unnecessary trend",
+    "A perfume can change your life",
+    "Vintage fragrances are the only real option",
+    "Clones should be illegal",
+    "Longevity is everything",
+    "You can't wear fresh perfumes in winter",
+    "Clothing and style don’t matter, only perfume does",
+    "Designer perfumes are just overpriced marketing, niche is the only true art",
+    "Only vintage batches smell authentic; reformulations ruin perfumes",
+    "Real men should never wear sweet perfumes",
+    "Perfume should only be worn at night, not during the day",
+    "Projection is more important than longevity",
+    "If you can't smell your own perfume, it's not worth wearing",
+    "Wearing perfume every day is a waste of money",
+    "Perfume should be banned in public spaces",
+    "Unisex perfumes are a myth; every scent has a gender",
+    "Seasonal restrictions are nonsense; any perfume can be worn year-round",
 ]
+
 
 
 # -----------------------------
@@ -217,6 +245,5 @@ async def chat(req: MessageRequest):
     history.append({"role": "bot", "message": bot_msg})
     save_conversation(cid, history)
 
-    # El challenge pide devolver los últimos 5 (más reciente al final)
     return {"conversation_id": cid, "message": history[-5:]}
 
