@@ -1,7 +1,11 @@
-# tests/test_main.py
-import os
+import os, sys
 from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
+
+# agrega la raíz del repo al sys.path
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
 # Env vars falsas para que main.py no truene al importar
 os.environ["GEMINI_API_KEY"] = "test-key"
