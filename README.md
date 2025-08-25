@@ -232,6 +232,7 @@ Add the `environment` lines to pass variables (with safe defaults), and mount th
  - ❌ **Empty Message Handling**: API rejects empty inputs with 400.  
  - ✅ **Conversation History**: Same conversation ID keeps history.  
  - ✅ **Consistency**: Bot does not change stance across multi-turn debates.  
+ - ✅ **Last 5 Messages Rule**: When a conversation exceeds 5+ turns, the API response returns **exactly the 5 most recent messages** in correct order, with the bot’s reply always at the end.  
 
 ---
 ## Future Improvements
