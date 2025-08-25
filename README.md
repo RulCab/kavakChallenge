@@ -59,6 +59,14 @@ This is the easiest way to experiment with the API without needing to set up Doc
 
 Interactive API docs:  
 👉 [https://kopichallenge.onrender.com/docs](https://kopichallenge.onrender.com/docs)
+
+
+ ## Example Usage
+
+ Here is a screenshot of a conversation with the bot in action:  
+ ![AI Debate Bot in action](bot_in_action.png)
+
+---
 ## Getting Started
 
 First, clone this repository:
@@ -224,13 +232,6 @@ Add the `environment` lines to pass variables (with safe defaults), and mount th
  - ❌ **Empty Message Handling**: API rejects empty inputs with 400.  
  - ✅ **Conversation History**: Same conversation ID keeps history.  
  - ✅ **Consistency**: Bot does not change stance across multi-turn debates.  
-
----
-
- ## Example Usage
-
- Here is a screenshot of a conversation with the bot in action:  
- ![AI Debate Bot in action](bot_in_action.png)
 
 ---
 ## Future Improvements
