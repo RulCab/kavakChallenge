@@ -18,6 +18,21 @@ help:
 
 # --- Local (Windows) ---
 install:
+	@echo ">>> Checking prerequisites..."
+	@python --version >/dev/null 2>&1 || { \
+		echo "Python not found."; \
+		echo "Windows: https://www.python.org/downloads/"; \
+		echo "macOS (brew): brew install python"; \
+		echo "Ubuntu/Debian: sudo apt-get install -y python3 python3-pip"; exit 1; }
+	@pip --version >/dev/null 2>&1 || { \
+		echo "pip not found."; \
+		echo "Try: python -m ensurepip --upgrade"; exit 1; }
+	@docker --version >/dev/null 2>&1 || { \
+		echo "Docker not found: https://docs.docker.com/get-docker/"; exit 1; }
+	@docker compose version >/dev/null 2>&1 || { \
+		echo "Docker Compose v2 not found."; \
+		echo "Update Docker Desktop or install compose v2"; exit 1; }
+	@echo ">>> Installing Python deps..."
 	python -m pip install -r requirements.txt
 
 test:
