@@ -1,46 +1,64 @@
 # Tech Challenge - AI Debate Bot
 
 ## Overview
-This project implements an AI-powered debate bot using **FastAPI**, **Google Gemini API**, and **Firebase Firestore**. The bot is designed to engage in persuasive debates, maintaining a strong stance on predefined topics.
-Hosted Version 🚀
+This project implements an AI-powered debate bot using **FastAPI**, **Google Gemini API**, and **Firebase Firestore**.  
+The bot is designed to engage in persuasive debates, maintaining a strong stance on predefined topics.
 
-A live instance is available on Render:
-👉 https://kopichallenge.onrender.com
+## Hosted Version 🚀
+A live instance is available on **Render**:  
+👉 [https://kopichallenge.onrender.com](https://kopichallenge.onrender.com)  
 
-Interactive API docs:
-👉 https://kopichallenge.onrender.com/docs
+ ## Testing via Swagger Docs
 
-Features
+ You can also test the API directly from your browser using the interactive Swagger UI:  
+ 👉 [https://kopichallenge.onrender.com/docs](https://kopichallenge.onrender.com/docs)
 
-🗣 Consistent arguments: the bot never changes its stance.
+ Steps:
+---
+>
+> You can maintain the same debate across multiple turns by reusing the `conversation_id`.
+>
+> 1. Send your **first message** without a `conversation_id`, for example:
+>    ```json
+>    {
+>      "message": "Convince me that niche perfumes are better than designer ones"
+>    }
+>    ```
+> 2. The API will respond with a new `conversation_id`:
+>    ```json
+>    {
+>      "conversation_id": "conv_4755",
+>      "message": [
+>        {"role": "bot", "message": "I will prove that Only vintage batches smell authentic..."},
+>        {"role": "user", "message": "Convince me that niche perfumes are better than designer ones"},
+>        {"role": "bot", "message": "Across cultures, scents have been tied to rituals..."}
+>      ]
+>    }
+>    ```
+> 3. For your **next request**, include the same `conversation_id` to continue the debate:
+>    ```json
+>    {
+>      "conversation_id": "conv_4755",
+>      "message": "But there are some really good and cheap dupes"
+>    }
+>    ```
+> 4. The bot will keep the context and maintain its stance:
+>    ```json
+>    {
+>      "conversation_id": "conv_4755",
+>      "message": [
+>        {"role": "user", "message": "But there are some really good and cheap dupes"},
+>        {"role": "bot", "message": "Let's stay on our topic: reformulations ruin perfumes..."}
+>      ]
+>    }
+>    ```
+>
+> This way, the bot remembers the debate and stays consistent throughout multi-turn conversations.
 
-🎭 Argument styles: historical, scientific, emotional, sarcastic, etc.
+This is the easiest way to experiment with the API without needing to set up Docker or environment variables locally.
 
-🗃 Conversation persistence: stored in Firebase Firestore (if configured).
-
-⏱ Response-time bound: under 30s with async timeout.
-
-🌸 Domain-specific topics: debates centered on perfumery.
-
-🐳 Docker-ready: run anywhere with one command.
-
-✅ Automated tests: ensure API reliability.
-
-Technologies
-
-FastAPI – backend framework.
-
-Google Gemini API – generative debate responses.
-
-Firebase Firestore – stores conversations (optional, falls back to in-memory).
-
-Docker + docker-compose – containerized runtime.
-
-Makefile – easy-to-use commands.
-
-Pytest – automated testing.
-
-
+Interactive API docs:  
+👉 [https://kopichallenge.onrender.com/docs](https://kopichallenge.onrender.com/docs)
 ## Getting Started
 
 First, clone this repository:
@@ -49,206 +67,177 @@ First, clone this repository:
 git clone https://github.com/RulCab/kavakChallenge.git
 cd kavakChallenge
 ```
-
+---
 ## Features
 - **Maintains a consistent argument**: The bot never changes its position, regardless of user input.
-- **Persuasive responses**: Uses different argumentation styles (historical, scientific, emotional, sarcastic) to convince the user.
-- **Conversation persistence**: Previous messages are stored in Firebase Firestore to maintain a logical flow.
-- **Handles long discussions**: The bot supports conversations exceeding ten messages, up to a maximum of 9 interactions (can be adjusted).
+- **Persuasive responses**: Uses different argumentation styles (historical, scientific, emotional, sarcastic, practical, philosophical, economic, cultural, humorous and romantic) to convince the user.
+- **Conversation persistence**: Previous messages are stored in Firebase Firestore to maintain a logical flow (fallback: in-memory only).
+- **Handles long discussions**:  Supports multi-turn conversations with configurable limits.
 - **Response time optimization**: Ensures responses are generated within **30 seconds**.
-- **Multiple debate topics**: The bot debates on various **perfumery-related topics**, including fragrance pricing, seasonal suitability, and niche vs. designer scents.
-- **Different argument styles**: The bot can argue using **historical, scientific, emotional, or sarcastic** tones.
+- **Multiple debate topics**: Focused on perfumery-related topics (designer vs niche, seasonal use, etc.).
+- **Docker-ready**: Easily run with make run
 
+---
 ## Technologies Used
 - **FastAPI**: Backend framework for handling API requests.
 - **Google Gemini API**: Generates AI-based debate responses.
 - **Firebase Firestore**: Stores conversation history.
-- **Ngrok**: Exposes the local API to a public URL.
-- **Python-dotenv**: Manages environment variables securely.
 - **Docker**: Containerizes the application for deployment.
 - **Makefile**: Automates service management tasks.
-
+- **Pytest**: For automated testing.
+---
 ## Code Structure
 A `Makefile` is provided to simplify the installation, execution, and testing of the service.
 
 ### Makefile Commands
-- `make` - Shows a list of all available commands.
-- `make install` - Installs all dependencies required to run the service.
+- `make help` - Shows a list of all available commands.
+- `make install` - Installs all dependencies locally.
 - `make test` - Runs the test suite.
-- `make run` - Starts the service and all related dependencies (e.g., Firebase) inside **Docker**.
+- `make build` - Builds the Docker image.
+- `make run` - Starts the service in Docker.
+- `make logs` - Follows logs from the service (exit with CTRL+C).
+- `make ps` - Lists running containers.
 - `make down` - Stops all running services.
-- `make clean` - Removes all Docker containers and related services.
-
+- `make clean` - Removes Docker containers/images/networks.
+---
 ## Environment Variables Setup
-To run this service, you need to create a `.env` file in the root directory with the following environment variables:
-
+Configuration is managed via a .env file in the root directory.
+An `.env.example` is included for reference:
 ```sh
-GEMINI_API_KEY=your_gemini_api_key
-FIREBASE_CREDENTIALS=/app/your_firebase_credentials.json
-NGROK_AUTH_TOKEN=your_ngrok_token
+# Gemini API key for the bot
+GEMINI_API_KEY=your_gemini_api_key_here
+# Firebase credentials path (inside the container)
+FIREBASE_CREDENTIALS=/app/firebase.json
 ```
+---
+## Notes
 
-Here's how you can obtain them:
+- If **`GEMINI_API_KEY`** is missing, the API still runs using a **mock response mode**.  
+- If **`FIREBASE_CREDENTIALS`** is missing or the file is not mounted, the API stores conversations **in memory**.  
+- To enable **Firestore persistence**, obtain a Firebase service account JSON from:  
+*Firebase Console → Project Settings → Service Accounts → Generate new private key*,  
+save it as `firebase.json` in the repo root, and mount it (see below).  
 
-- **GEMINI_API_KEY**:  
-  1. Visit [Google AI Studio](https://aistudio.google.com/) and sign in with your Google account.  
-  2. Create a new project and enable the **Gemini API**.  
-  3. Generate an API key and copy it into your `.env` file.
-
-- **FIREBASE_CREDENTIALS**:  
-  1. Go to [Firebase Console](https://console.firebase.google.com/) and create a new project.  
-  2. Navigate to **Project Settings > Service Accounts**.  
-  3. Click **Generate new private key**, and save the `.json` file in the root directory of your project.  
-  4. Ensure your `.env` file references it as `/app/your_firebase_credentials.json`.  
-  5. Update `docker-compose.yml` to mount the file inside the container:
-     ```yaml
-     volumes:
-       - ./your_firebase_credentials.json:/app/your_firebase_credentials.json
-     ```
-
-- **NGROK_AUTH_TOKEN**:  
-  1. Sign up at [Ngrok](https://ngrok.com/) and log in.  
-  2. Go to your dashboard and copy your authentication token.  
-  3. Add it to your `.env` file.
+---
 
 ## Modifications in `docker-compose.yml`
-For the bot to work correctly, update your `docker-compose.yml` to include the Firebase credentials JSON file as a volume:
 
-```yaml
-version: '3.8'
+Minimal `docker-compose.yml` to run locally (**no `.env` required**).  
+Add the `environment` lines to pass variables (with safe defaults), and mount the Firebase JSON only if you plan to use Firestore:
 
-services:
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-    container_name: ai-debate-bot
-    environment:
-      - FIREBASE_CREDENTIALS=/app/your_firebase_credentials.json
-    ports:
-      - "8000:8000"
-    volumes:
-      - .:/app
-      - ./your_firebase_credentials.json:/app/your_firebase_credentials.json
-```
+ ```yaml
+ services:
+   api:
+     build: .
+     container_name: ai-debate-bot
+     ports:
+       - "8000:8000"
+     environment:
+       # Fallbacks let the container start even without a .env
+       GEMINI_API_KEY: "${GEMINI_API_KEY:-dummy}"
+       FIREBASE_CREDENTIALS: "${FIREBASE_CREDENTIALS:-}"
+     volumes:
+       - .:/app
+       # Uncomment the next line if you have firebase.json and want persistence
+       # - ./firebase.json:/app/firebase.json
+     command: uvicorn main:app --host 0.0.0.0 --port 8000
+ ```
 
+ Once the configuration is set, run the service:
 
-Once the `.env` file is set up, you can proceed with running the service using Docker:
+ ```sh
+ make run
+ ```
 
-```sh
-make run
-```
+ Visit: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-## API Endpoint
+---
 
-The API is publicly accessible at:
-https://ai-debate-bot.ngrok.io/
+ ## API Endpoint
 
-### `POST /chat`
-Handles user messages and generates AI responses.
+ ### `POST /chat`
+ Handles user messages and generates AI responses.  
 
-#### Request Body:
-```json
-{
-  "conversation_id": "optional_conversation_id",
-  "message": "User's input message"
-}
-```
-- `conversation_id` (optional): If not provided, the API will create a new conversation ID.
-If provided, the bot will remember the previous messages in that conversation.
-- `message`: The user's message to the bot.
+ **Request Body:**
+ ```json
+ {
+   "conversation_id": null,
+   "message": "Tell me why Dior Sauvage is the best!"
+ }
+ ```
 
-#### Response:
-```json
-{
-  "conversation_id": "unique_id_for_the_conversation",
-  "messages": [
-    {"role": "user", "message": "User's input"},
-    {"role": "bot", "message": "AI-generated response"}
-  ]
-}
-```
+ - `conversation_id` (optional): If not provided, a new conversation is created.  
+   If provided, the bot will remember previous messages in that conversation.  
+ - `message`: The user's message to the bot.  
 
-## Deployment
-### Running with Docker
-1. Build and start the service:
+ **Response:**
+ ```json
+ {
+   "conversation_id": "conv_1234",
+   "message": [
+     {"role": "bot", "message": "I will prove that Longevity is everything!"},
+     {"role": "user", "message": "Tell me more"},
+     {"role": "bot", "message": "Let's stay on our topic..."}
+   ]
+ }
+ ```
+
+---
+
+ ## Deployment
+
+ ### Running with Docker
+ - **Build and start the service**:
    ```sh
    make run
    ```
-2. Stop running services:
+ - **View logs**:
+   ```sh
+   make logs  # exit with CTRL+C
+   ```
+ - **Stop running services**:
    ```sh
    make down
    ```
-3. Remove all containers:
+ - **Remove all containers and dangling resources**:
    ```sh
    make clean
    ```
 
-### Exposing the API with ngrok
-If you need to expose the API for external access, use ngrok:
+---
 
-   ```sh
-ngrok http --subdomain=ai-debate-bot 8000
-   ```
-Once started, you can access the API at:
-   ```sh
-https://ai-debate-bot.ngrok.io/
-   ```
-You can then test it using:
-   ```sh
-curl -X POST "https://ai-debate-bot.ngrok.io/chat" \
--H "Content-Type: application/json" \
--d '{"message": "Tell me why Dior Sauvage is the best!"}'
-   ```
-To access the interactive API documentation:
+ ## Automated Testing with Pytest
 
-Open https://ai-debate-bot.ngrok.io/docs in your browser.
+ Run the automated tests to validate core behavior:
+ ```sh
+ make test
+ ```
 
-## Automated Testing with Pytest
-To ensure the API behaves correctly, we have implemented four automated tests using pytest. These tests cover different edge cases and functionalities.
-```sh
-make test
-```
-or manually with
-```sh
-pytest
-```
-### Implemented Tests
+ **Example output:**
+ ```
+ tests/test_main.py .... [100%]
+ 4 passed in 2.9s
+ ```
 
-The following tests validate different API behaviors:
+ ### Implemented Tests
+ - ✅ **Basic Chat Response**: Valid messages return a structured response.  
+ - ❌ **Empty Message Handling**: API rejects empty inputs with 400.  
+ - ✅ **Conversation History**: Same conversation ID keeps history.  
+ - ✅ **Consistency**: Bot does not change stance across multi-turn debates.  
 
-✅ Test 1: Basic Chat Response
+---
 
-- ✔️ Ensures that sending a valid message returns a correct response.
-- ✔️ Verifies that a conversation ID is assigned.
-- ✔️ Checks that the response structure includes a messages list.
+ ## Example Usage
 
-❌ Test 2: Handling Empty Messages
+ Here is a screenshot of a conversation with the bot in action:  
+ ![AI Debate Bot in action](bot-in-action.png)
 
-- ✔️ Ensures the API rejects empty messages with a 400 Bad Request error.
+---
 
-✅ Test 3: Maintaining Conversation History
+ ## Conclusion
 
-- ✔️ Ensures that multiple messages within the same conversation retain the same conversation ID.
-- ✔️ Confirms that the API maintains history for long conversations.
-
-✅ Test 4: Debate Bot Adapts to Multi-Turn Conversations
-
-- ✔️ Ensures the bot does not change its stance throughout a long conversation.
-- ✔️ Verifies that argument styles remain consistent during multiple exchanges.
-
-
-## Example Usage
-
-Here is a screenshot of a conversation with the bot in action:
-
-![AI Debate Bot en acción](ai-in-action.png)
-
-
-## Conclusion
-This project successfully meets all the requirements of the tech challenge by implementing a **fast, persuasive, and structured AI debate bot** with **automated deployment and testing**. It supports multiple argument styles and topics while maintaining a logical flow of conversation stored in Firebase Firestore.
-
+ This project meets the challenge requirements by providing a **fast, persuasive, and structured AI debate bot** with **Docker support, automated tests, and a hosted deployment**.  
+ It supports multiple argument styles and topics while maintaining a logical conversation flow, with sensible fallbacks when environment variables are not provided.
 
 
 
