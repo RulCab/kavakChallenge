@@ -190,6 +190,16 @@ Add the `environment` lines to pass variables (with safe defaults), and mount th
  }
  ```
 
+### `GET /healthz`
+Simple health check endpoint to verify that the API is running.  
+
+**Response:**
+```json
+{
+  "status": "ok"
+}
+ ```
+
 ---
 
  ## Deployment
