@@ -68,3 +68,42 @@ def test_long_conversation():
         else:
             assert r.json()["conversation_id"] == cid
 
+def test_returns_last_five_messages_in_order():
+    mem_store = {}
+
+    def _fake_load(cid: str):
+        return mem_store.get(cid, [])
+
+    def _fake_save(cid: str, msgs: list[dict]):
+        mem_store[cid] = list(msgs)
+
+    with patch("main.load_conversation", side_effect=_fake_load), \
+         patch("main.save_conversation", side_effect=_fake_save):
+
+        cid = None
+        for i in range(7):
+            payload = {"message": f"msg_{i}"}
+            if cid:
+                payload["conversation_id"] = cid
+            r = client.post("/chat", json=payload)
+            assert r.status_code == 200
+            data = r.json()
+            if not cid:
+                cid = data["conversation_id"]
+
+        last = client.post("/chat", json={"conversation_id": cid, "message": "final"})
+        assert last.status_code == 200
+        resp = last.json()
+
+        # 1) Debe devolver exactamente 5 mensajes
+        assert "message" in resp and isinstance(resp["message"], list)
+        assert len(resp["message"]) == 5
+
+        # 2) Debe coincidir con los 5 últimos guardados en la "BD"
+        expected_tail = mem_store[cid][-5:]  # lo que realmente guarda el servicio
+        assert resp["message"] == expected_tail
+
+        # 3) El último elemento debe ser la respuesta del bot
+        assert resp["message"][-1]["role"] == "bot"
+
+
