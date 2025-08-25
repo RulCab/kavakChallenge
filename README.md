@@ -236,11 +236,11 @@ Add the `environment` lines to pass variables (with safe defaults), and mount th
 ---
 ## Future Improvements
 
-- 🔹 **Web Chat Interface**: Add a simple frontend (e.g., React or plain HTML/JS) to interact with the bot in a chat-style UI instead of only Swagger.  
-- 🔹 **Enhanced Persistence**: Support multiple backends (e.g., PostgreSQL, DynamoDB) in addition to Firebase.  
-- 🔹 **User Management**: Allow authentication and user-specific conversation histories.  
-- 🔹 **Monitoring & Metrics**: Add logging, analytics, and usage dashboards.  
-- 🔹 **CI/CD**: Automate tests and deployment pipeline for faster iteration.  
+-  **Web Chat Interface**: Add a simple frontend (e.g., React or plain HTML/JS) to interact with the bot in a chat-style UI instead of only Swagger.  
+-  **Enhanced Persistence**: Support multiple backends (e.g., PostgreSQL, DynamoDB) in addition to Firebase.  
+-  **User Management**: Allow authentication and user-specific conversation histories.  
+-  **Monitoring & Metrics**: Add logging, analytics, and usage dashboards.  
+-  **CI/CD**: Automate tests and deployment pipeline for faster iteration.  
 
 ---
 
