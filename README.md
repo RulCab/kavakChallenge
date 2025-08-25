@@ -230,7 +230,7 @@ Add the `environment` lines to pass variables (with safe defaults), and mount th
  ## Example Usage
 
  Here is a screenshot of a conversation with the bot in action:  
- ![AI Debate Bot in action](bot-in-action.png)
+ ![AI Debate Bot in action](bot_in_action.png)
 
 ---
 
