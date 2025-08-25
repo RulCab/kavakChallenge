@@ -18,12 +18,12 @@ help:
 
 # --- Local (Windows) ---
 install:
-	@echo ">>> Checking prerequisites..."
-	@python --version >NUL 2>&1 || (echo Python not found. & exit /b 1)
-	@pip --version >NUL 2>&1 || (echo pip not found. Try: python -m ensurepip --upgrade & exit /b 1)
-	@docker --version >NUL 2>&1 || (echo Docker not found: https://docs.docker.com/get-docker/ & exit /b 1)
-	@docker compose version >NUL 2>&1 || (echo Docker Compose v2 not found. Update Docker Desktop & exit /b 1)
-	@echo ">>> Installing Python deps..."
+	@echo >>> Checking prerequisites...
+	@python --version >NUL 2>&1 || (echo Python not found. && echo Windows: https://www.python.org/downloads/ && exit /b 1)
+	@python -m pip --version >NUL 2>&1 || (echo pip not found. Try: python -m ensurepip --upgrade && exit /b 1)
+	@docker --version >NUL 2>&1 || (echo Docker not found: https://docs.docker.com/get-docker/ && exit /b 1)
+	@docker compose version >NUL 2>&1 || (echo Docker Compose v2 not found. Update Docker Desktop && exit /b 1)
+	@echo >>> Installing Python deps...
 	python -m pip install -r requirements.txt
 
 test:
