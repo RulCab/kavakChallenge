@@ -1,7 +1,45 @@
 # Tech Challenge - AI Debate Bot
 
 ## Overview
-This project implements an AI-powered debate bot using **FastAPI**, **Google Gemini API**, and **Firebase Firestore**. The bot is designed to engage in persuasive debates while maintaining a strong stance on a given topic.
+This project implements an AI-powered debate bot using **FastAPI**, **Google Gemini API**, and **Firebase Firestore**. The bot is designed to engage in persuasive debates, maintaining a strong stance on predefined topics.
+Hosted Version 🚀
+
+A live instance is available on Render:
+👉 https://kopichallenge.onrender.com
+
+Interactive API docs:
+👉 https://kopichallenge.onrender.com/docs
+
+Features
+
+🗣 Consistent arguments: the bot never changes its stance.
+
+🎭 Argument styles: historical, scientific, emotional, sarcastic, etc.
+
+🗃 Conversation persistence: stored in Firebase Firestore (if configured).
+
+⏱ Response-time bound: under 30s with async timeout.
+
+🌸 Domain-specific topics: debates centered on perfumery.
+
+🐳 Docker-ready: run anywhere with one command.
+
+✅ Automated tests: ensure API reliability.
+
+Technologies
+
+FastAPI – backend framework.
+
+Google Gemini API – generative debate responses.
+
+Firebase Firestore – stores conversations (optional, falls back to in-memory).
+
+Docker + docker-compose – containerized runtime.
+
+Makefile – easy-to-use commands.
+
+Pytest – automated testing.
+
 
 ## Getting Started
 
