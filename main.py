@@ -25,7 +25,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, constr
 
 # -----------------------------
-# Settings (desde environment)
+# Settings (from environment)
 # -----------------------------
 class Settings(BaseModel):
     gemini_key: Optional[str] = Field(None, alias="GEMINI_API_KEY")
@@ -49,7 +49,7 @@ def load_settings() -> Settings:
 settings = load_settings()
 
 # -----------------------------
-# Firebase & Gemini init (NO-op si faltan)
+# Firebase & Gemini init
 # -----------------------------
 db = None
 firebase_enabled = False
@@ -62,42 +62,42 @@ if settings.firebase_creds_path:
                 firebase_admin.initialize_app(cred)
             db = firestore.client()
             firebase_enabled = True
-            print("[INFO] Firebase inicializado.")
+            print("[INFO] Firebase initialized.")
         except Exception as e:
-            print(f"[WARN] No se pudo inicializar Firebase: {e}. Persistencia en memoria.")
+            print(f"[WARN] Could not initialize Firebase: {e}. Using in-memory persistence.")
     else:
-        print(f"[WARN] FIREBASE_CREDENTIALS '{settings.firebase_creds_path}' no encontrado o SDK no disponible. Persistencia en memoria.")
+        print(f"[WARN] FIREBASE_CREDENTIALS '{settings.firebase_creds_path}' not found or SDK unavailable. Using in-memory persistence.")
 else:
-    print("[INFO] FIREBASE_CREDENTIALS vacío. Persistencia en memoria.")
+    print("[INFO] FIREBASE_CREDENTIALS not set. Using in-memory persistence.")
 
 gemini_enabled = bool(settings.gemini_key) and genai is not None
 if gemini_enabled:
     try:
         genai.configure(api_key=settings.gemini_key)
-        print("[INFO] Gemini configurado.")
+        print("[INFO] Gemini configured.")
     except Exception as e:
-        print(f"[WARN] No se pudo configurar Gemini: {e}. Usando respuestas mock.")
+        print(f"[WARN] Could not configure Gemini: {e}. Using mock responses.")
         gemini_enabled = False
 else:
-    print("[INFO] GEMINI_API_KEY vacío o SDK no disponible. Usando respuestas mock.")
+    print("[INFO] GEMINI_API_KEY not set or SDK unavailable. Using mock responses.")
 
 # -----------------------------
-# FastAPI app con Swagger Pro
+# FastAPI app + Swagger
 # -----------------------------
 openapi_tags = [
-    {"name": "meta", "description": "Endpoints de salud y metainformación."},
-    {"name": "chat", "description": "Conversación con el bot: defiende su postura y mantiene el tema."},
+    {"name": "meta", "description": "Health and metadata endpoints."},
+    {"name": "chat", "description": "Debate with the bot: it defends its stance and stays on topic."},
 ]
 
 app = FastAPI(
     title="Kopi Debate API",
     version="1.2.0",
     description=(
-        "API de debate.\n\n"
-        "- El bot **elige/recuerda** un tema y **defiende su postura** (stand your ground).\n"
-        "- Mantiene la conversación enfocada en el tema inicial.\n"
-        "- Tiempo máximo de respuesta: **≤ 30s**.\n"
-        "- Devuelve el **histórico reciente (últimos 5 mensajes)**, con el más nuevo al final."
+        "Debate API.\n\n"
+        "- The bot **chooses/remembers** a topic and **defends its stance** (stand your ground).\n"
+        "- Keeps the conversation tied to the original claim.\n"
+        "- Maximum response time: **≤ 30s**.\n"
+        "- Returns the **last 5 messages** (latest last)."
     ),
     contact={
         "name": "RulCab",
@@ -105,12 +105,12 @@ app = FastAPI(
     },
     license_info={"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
     openapi_tags=openapi_tags,
-    docs_url=None,     # deshabilitamos el /docs por defecto para inyectar uno custom
+    docs_url=None,
     redoc_url="/redoc"
 )
 
 # -----------------------------
-# Datos / prompts base
+# Topics & Styles
 # -----------------------------
 TOPICS = [
     "Expensive perfumes are always better than cheap ones",
@@ -133,7 +133,7 @@ ARGUMENT_STYLES = [
 ]
 
 # -----------------------------
-# Esquemas (para Swagger bonito)
+# Schemas (for Swagger)
 # -----------------------------
 class ChatMessage(BaseModel):
     role: Literal["user", "bot"]
@@ -145,24 +145,24 @@ class ChatMessage(BaseModel):
 class MessageRequest(BaseModel):
     conversation_id: Optional[str] = Field(
         None,
-        description="ID de conversación. Si es null/omitido, se inicia una conversación nueva.",
+        description="Conversation ID. If null/omitted, starts a new conversation.",
         examples=[None, "conv_6585"],
     )
     message: constr(strip_whitespace=True, min_length=1, max_length=2000) = Field(
         ...,
-        description="Mensaje del usuario.",
-        examples=["hola", "What is the best perfume?"]
+        description="User's message.",
+        examples=["hello", "What is the best perfume?"]
     )
 
 class ChatResponse(BaseModel):
     conversation_id: str = Field(..., examples=["conv_6585"])
     message: List[ChatMessage] = Field(
         ...,
-        description="Histórico reciente (máx. 5). Último mensaje al final.",
+        description="Recent history (max 5). Latest message is last.",
         examples=[[
             {"role": "bot",  "message": "I will prove that Expensive perfumes are always better than cheap ones!"},
-            {"role": "user", "message": "hola"},
-            {"role": "bot",  "message": "Hola! Scientifically speaking..."}
+            {"role": "user", "message": "hello"},
+            {"role": "bot",  "message": "Hello! Scientifically speaking..."}
         ]]
     )
 
@@ -170,7 +170,7 @@ class ErrorResponse(BaseModel):
     detail: str = Field(..., examples=["Response time exceeded 30 seconds"])
 
 # -----------------------------
-# Persistencia: Firestore ó memoria
+# Persistence
 # -----------------------------
 _memory_store: Dict[str, List[dict]] = {}
 
@@ -228,7 +228,7 @@ User: {user_message}
 AI:"""
 
 # -----------------------------
-# Modelo (con fallback mock)
+# Model (with mock fallback)
 # -----------------------------
 def call_model_sync(prompt: str) -> str:
     model = genai.GenerativeModel(model_name=settings.model_name)
@@ -249,7 +249,7 @@ async def generate_gemini_response_async(topic: str, user_message: str, style: s
 # -----------------------------
 # Endpoints
 # -----------------------------
-@app.get("/", tags=["meta"], summary="Root", description="Información del servicio y flags de dependencias.")
+@app.get("/", tags=["meta"], summary="Root", description="Service info and dependency flags.")
 def root():
     return {
         "name": "Kopi Debate API",
@@ -259,26 +259,26 @@ def root():
         "firebase": firebase_enabled,
     }
 
-@app.get("/healthz", tags=["meta"], summary="Health", description="Comprobación simple de salud.")
+@app.get("/healthz", tags=["meta"], summary="Health", description="Simple health check.")
 def health():
     return {"status": "ok"}
 
 @app.post(
     "/chat",
     tags=["chat"],
-    summary="Enviar mensaje al bot",
+    summary="Send a message to the bot",
     description=(
-        "Inicia o continúa una conversación.\n\n"
-        "- Si **no** envías `conversation_id`, el bot inicia un tema y su postura.\n"
-        "- Si lo envías, continúa el hilo y **se mantiene en el tema** (‘stand your ground’).\n"
-        "- Respuesta máxima: **≤ 30s**.\n"
-        "- Devuelve **últimos 5 mensajes** (más reciente al final)."
+        "Start or continue a conversation.\n\n"
+        "- If **no** `conversation_id` is provided, the bot starts a topic and its stance.\n"
+        "- If provided, it continues the thread and **keeps defending the original claim**.\n"
+        "- Max response time: **≤ 30s**.\n"
+        "- Returns **last 5 messages** (latest last)."
     ),
     response_model=ChatResponse,
     responses={
-        408: {"model": ErrorResponse, "description": "Timeout de generación (≥30s)."},
-        422: {"description": "Validación de payload."},
-        500: {"model": ErrorResponse, "description": "Error interno."},
+        408: {"model": ErrorResponse, "description": "Generation timeout (≥30s)."},
+        422: {"description": "Payload validation error."},
+        500: {"model": ErrorResponse, "description": "Internal server error."},
     },
 )
 async def chat(req: MessageRequest):
@@ -317,7 +317,7 @@ async def chat(req: MessageRequest):
     return resp
 
 # -----------------------------
-# Swagger UI personalizado
+# Custom Swagger UI
 # -----------------------------
 @app.get("/docs", include_in_schema=False)
 def custom_swagger_ui():
@@ -351,4 +351,5 @@ def custom_openapi():
     return app.openapi_schema
 
 app.openapi = custom_openapi  # type: ignore
+
 
