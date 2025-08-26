@@ -2,8 +2,8 @@ import os
 import time
 import random
 import asyncio
-from typing import Optional, Dict, List
 from pathlib import Path
+from typing import Optional, List, Dict, Literal
 
 try:
     import firebase_admin
@@ -18,7 +18,10 @@ try:
 except Exception:
     genai = None
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, status
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, constr
 
 # -----------------------------
@@ -79,9 +82,32 @@ else:
     print("[INFO] GEMINI_API_KEY vacío o SDK no disponible. Usando respuestas mock.")
 
 # -----------------------------
-# FastAPI app
+# FastAPI app con Swagger Pro
 # -----------------------------
-app = FastAPI(title="Kopi Debate API", version="1.0.0")
+openapi_tags = [
+    {"name": "meta", "description": "Endpoints de salud y metainformación."},
+    {"name": "chat", "description": "Conversación con el bot: defiende su postura y mantiene el tema."},
+]
+
+app = FastAPI(
+    title="Kopi Debate API",
+    version="1.2.0",
+    description=(
+        "API de debate.\n\n"
+        "- El bot **elige/recuerda** un tema y **defiende su postura** (stand your ground).\n"
+        "- Mantiene la conversación enfocada en el tema inicial.\n"
+        "- Tiempo máximo de respuesta: **≤ 30s**.\n"
+        "- Devuelve el **histórico reciente (últimos 5 mensajes)**, con el más nuevo al final."
+    ),
+    contact={
+        "name": "RulCab",
+        "url": "https://github.com/RulCab/kavakChallenge",
+    },
+    license_info={"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
+    openapi_tags=openapi_tags,
+    docs_url=None,     # deshabilitamos el /docs por defecto para inyectar uno custom
+    redoc_url="/redoc"
+)
 
 # -----------------------------
 # Datos / prompts base
@@ -97,16 +123,6 @@ TOPICS = [
     "Longevity is everything",
     "You can't wear fresh perfumes in winter",
     "Clothing and style don’t matter, only perfume does",
-    "Designer perfumes are just overpriced marketing, niche is the only true art",
-    "Only vintage batches smell authentic; reformulations ruin perfumes",
-    "Real men should never wear sweet perfumes",
-    "Perfume should only be worn at night, not during the day",
-    "Projection is more important than longevity",
-    "If you can't smell your own perfume, it's not worth wearing",
-    "Wearing perfume every day is a waste of money",
-    "Perfume should be banned in public spaces",
-    "Unisex perfumes are a myth; every scent has a gender",
-    "Seasonal restrictions are nonsense; any perfume can be worn year-round",
 ]
 
 ARGUMENT_STYLES = [
@@ -114,20 +130,44 @@ ARGUMENT_STYLES = [
     "Scientific: Studies have shown that luxury fragrances contain more refined ingredients...",
     "Emotional: An expensive perfume is not just a scent, it's a bottled memory...",
     "Sarcastic: Sure, go ahead and use a cheap perfume if you want to smell like a car air freshener...",
-    "Practical: From a practical perspective, certain perfumes simply don't work in specific contexts...",
-    "Philosophical: Perfume is a reflection of identity and existence; choosing wrongly betrays your essence...",
-    "Economic: The fragrance industry thrives on trends, but real value comes from performance and longevity...",
-    "Cultural: Across cultures, scents have been tied to rituals, status, and belonging...",
-    "Humorous: Imagine walking into a party smelling like cleaning spray—hilarious, but hardly persuasive...",
-    "Romantic: A perfume is like a love story; mismatched notes are like broken promises...",
 ]
 
 # -----------------------------
-# Esquemas
+# Esquemas (para Swagger bonito)
 # -----------------------------
+class ChatMessage(BaseModel):
+    role: Literal["user", "bot"]
+    message: constr(strip_whitespace=True, min_length=1) = Field(
+        ...,
+        examples=["I will prove that Expensive perfumes are always better than cheap ones!"]
+    )
+
 class MessageRequest(BaseModel):
-    conversation_id: Optional[str] = None
-    message: constr(strip_whitespace=True, min_length=1, max_length=2000)
+    conversation_id: Optional[str] = Field(
+        None,
+        description="ID de conversación. Si es null/omitido, se inicia una conversación nueva.",
+        examples=[None, "conv_6585"],
+    )
+    message: constr(strip_whitespace=True, min_length=1, max_length=2000) = Field(
+        ...,
+        description="Mensaje del usuario.",
+        examples=["hola", "What is the best perfume?"]
+    )
+
+class ChatResponse(BaseModel):
+    conversation_id: str = Field(..., examples=["conv_6585"])
+    message: List[ChatMessage] = Field(
+        ...,
+        description="Histórico reciente (máx. 5). Último mensaje al final.",
+        examples=[[
+            {"role": "bot",  "message": "I will prove that Expensive perfumes are always better than cheap ones!"},
+            {"role": "user", "message": "hola"},
+            {"role": "bot",  "message": "Hola! Scientifically speaking..."}
+        ]]
+    )
+
+class ErrorResponse(BaseModel):
+    detail: str = Field(..., examples=["Response time exceeded 30 seconds"])
 
 # -----------------------------
 # Persistencia: Firestore ó memoria
@@ -196,7 +236,6 @@ def call_model_sync(prompt: str) -> str:
     return (getattr(resp, "text", "") or "").strip()
 
 async def generate_gemini_response_async(topic: str, user_message: str, style: str) -> str:
-    # Si no hay Gemini, responder modo mock
     if not gemini_enabled:
         return (
             f"**{topic}** — (mock)\n"
@@ -204,39 +243,44 @@ async def generate_gemini_response_async(topic: str, user_message: str, style: s
             f"You said: *{user_message}*.\n"
             f"My stance remains firm. Which part do you disagree with the most?"
         )
-
     prompt = build_prompt(topic, user_message, style)
-    try:
-        return await asyncio.to_thread(call_model_sync, prompt)
-    except Exception:
-        # Fallback minimalista
-        short = f"Defend: {topic}. Style: {style}. User: {user_message}\nAI:"
-        try:
-            return await asyncio.to_thread(call_model_sync, short)
-        except Exception:
-            return (
-                f"I will keep defending my original claim (**{topic}**) despite technical issues. "
-                "Which part do you disagree with the most?"
-            )
+    return await asyncio.to_thread(call_model_sync, prompt)
 
 # -----------------------------
 # Endpoints
 # -----------------------------
-@app.get("/")
+@app.get("/", tags=["meta"], summary="Root", description="Información del servicio y flags de dependencias.")
 def root():
     return {
         "name": "Kopi Debate API",
-        "version": "1.0.0",
+        "version": "1.2.0",
         "ready": True,
         "gemini": gemini_enabled,
         "firebase": firebase_enabled,
     }
 
-@app.get("/healthz")
+@app.get("/healthz", tags=["meta"], summary="Health", description="Comprobación simple de salud.")
 def health():
     return {"status": "ok"}
 
-@app.post("/chat")
+@app.post(
+    "/chat",
+    tags=["chat"],
+    summary="Enviar mensaje al bot",
+    description=(
+        "Inicia o continúa una conversación.\n\n"
+        "- Si **no** envías `conversation_id`, el bot inicia un tema y su postura.\n"
+        "- Si lo envías, continúa el hilo y **se mantiene en el tema** (‘stand your ground’).\n"
+        "- Respuesta máxima: **≤ 30s**.\n"
+        "- Devuelve **últimos 5 mensajes** (más reciente al final)."
+    ),
+    response_model=ChatResponse,
+    responses={
+        408: {"model": ErrorResponse, "description": "Timeout de generación (≥30s)."},
+        422: {"description": "Validación de payload."},
+        500: {"model": ErrorResponse, "description": "Error interno."},
+    },
+)
 async def chat(req: MessageRequest):
     cid = req.conversation_id or f"conv_{random.randint(1000, 9999)}"
     history = load_conversation(cid)
@@ -261,10 +305,50 @@ async def chat(req: MessageRequest):
             timeout=max(1, settings.max_reply_secs - 2),
         )
     except asyncio.TimeoutError:
-        raise HTTPException(status_code=408, detail="Response time exceeded 30 seconds")
+        raise HTTPException(status_code=status.HTTP_408_REQUEST_TIMEOUT, detail="Response time exceeded 30 seconds")
 
     history.append({"role": "bot", "message": bot_msg})
     save_conversation(cid, history)
 
-    return {"conversation_id": cid, "message": history[-5:]}
+    payload = {"conversation_id": cid, "message": history[-5:]}
+    resp = JSONResponse(payload)
+    resp.headers["X-Conversation-Id"] = cid
+    resp.headers["X-Service"] = "kopi-debate"
+    return resp
+
+# -----------------------------
+# Swagger UI personalizado
+# -----------------------------
+@app.get("/docs", include_in_schema=False)
+def custom_swagger_ui():
+    return get_swagger_ui_html(
+        openapi_url=app.openapi_url,
+        title=f"{app.title} – Docs",
+        swagger_favicon_url="https://fastapi.tiangolo.com/img/favicon.png",
+        swagger_ui_parameters={
+            "displayRequestDuration": True,
+            "defaultModelsExpandDepth": 0,
+            "filter": True,
+            "syntaxHighlight.theme": "obsidian",
+            "persistAuthorization": True,
+        },
+    )
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    openapi_schema["servers"] = [
+        {"url": "https://kopichallenge.onrender.com"},
+        {"url": "http://localhost:8000"},
+    ]
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi  # type: ignore
 
