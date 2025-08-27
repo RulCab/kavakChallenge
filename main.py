@@ -82,6 +82,17 @@ else:
     print("[INFO] GEMINI_API_KEY not set or SDK unavailable. Using mock responses.")
 
 # -----------------------------
+# Test-friendly overrides
+# -----------------------------
+# When running tests, disable real external deps via env flags.
+if os.getenv("DISABLE_FIREBASE") == "1":
+    firebase_enabled = False
+    db = None
+
+if os.getenv("DISABLE_GEMINI") == "1":
+    gemini_enabled = False
+
+# -----------------------------
 # FastAPI app + Swagger
 # -----------------------------
 openapi_tags = [
