@@ -1,8 +1,8 @@
-# Tech Challenge - AI Debate Bot
+# Eau de Debate – AI Perfume Bot 💨
 
 ## Overview
-This project implements an AI-powered debate bot using **FastAPI**, **Google Gemini API**, and **Firebase Firestore**.  
-The bot is designed to engage in persuasive debates, maintaining a strong stance on predefined topics.
+This project implements an AI-powered **perfume debate bot** using **FastAPI**, **Google Gemini API**, and **Firebase Firestore**.  
+The bot is designed to engage in persuasive debates about **perfumery-related topics** (designer vs niche, seasonal use, longevity, etc.), always maintaining a strong stance on predefined claims.
 
 ## Hosted Version 🚀
 A live instance is available on **Render**:  
@@ -259,7 +259,3 @@ Simple health check endpoint to verify that the API is running.
 
  This project meets the challenge requirements by providing a **fast, persuasive, and structured AI debate bot** with **Docker support, automated tests, and a hosted deployment**.  
  It supports multiple argument styles and topics while maintaining a logical conversation flow, with sensible fallbacks when environment variables are not provided.
-
-
-
-
