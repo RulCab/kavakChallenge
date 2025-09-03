@@ -33,21 +33,35 @@ Conversation:
 User: {user_message}
 AI:"""
 
+_PREFIXES = [
+    r"conv[ée]nceme\s+de\s+que\s+",
+    r"convenceme\s+de\s+que\s+",
+    r"demu[ée]strame\s+que\s+",
+    r"demuestrame\s+que\s+",
+    r"pru[ée]bame\s+que\s+",
+    r"pruebame\s+que\s+",
+    r"prove\s+that\s+",
+]
+
+_PREFIX_RE = re.compile(rf"(?i)^(?:{'|'.join(_PREFIXES)})")
+
+def _strip_prefix(text: str) -> str:
+    t = text.strip()
+    return _PREFIX_RE.sub("", t)
+
 def parse_topic_and_stance(user_msg: str) -> Tuple[str, str]:
     """
-    Regresa (topic, stance) a partir del primer mensaje del usuario.
-    Reglas simples, robustas a español/inglés y variantes comunes:
-      - "convénceme de que A es mejor que B"  -> topic: "A vs B"; stance: "A es mejor que B"
-      - "convenceme de que A es mejor que B" (sin acento) idem
-      - "demuéstrame que ..." / "prove that ..." idem
-      - Si no matchea nada: topic = user_msg limpio; stance = user_msg limpio.
+    (topic, stance) desde el 1er mensaje.
+      - "Convénceme de que A es mejor que B" -> topic="A vs B"; stance="A es mejor que B"
+      - "La tierra es plana" -> topic="La tierra es plana"; stance igual
+      - Si no matchea: topic = stance = mensaje limpio.
     """
-    text = user_msg.strip()
-    # Normaliza comillas raras y espacios
-    text = re.sub(r"\s+", " ", text)
+    original = user_msg.strip()
+    text = re.sub(r"\s+", " ", original)
+    core = _strip_prefix(text)  # quita 'convenceme de que', 'prove that', etc.
 
     # 1) patrón 'A es mejor que B'
-    m = re.search(r'(?i)(que\s+)?(?P<a>[^.?!]+?)\s+es\s+mejor\s+que\s+(?P<b>[^.?!]+)', text)
+    m = re.search(r'(?i)\b(?P<a>[^.?!]+?)\s+es\s+mejor\s+que\s+(?P<b>[^.?!]+)', core)
     if m:
         a = m.group('a').strip(' "\'').rstrip('.')
         b = m.group('b').strip(' "\'').rstrip('.')
@@ -55,13 +69,11 @@ def parse_topic_and_stance(user_msg: str) -> Tuple[str, str]:
         stance = f"{a} es mejor que {b}"
         return (topic, stance)
 
-    # 2) patrón directo: 'la tierra es plana' / 'the earth is flat'
-    #  -> la stance es toda la afirmación; topic igual (genérico)
-    m2 = re.search(r'(?i)(conv[ée]nceme\s+de\s+que|demu[ée]strame\s+que|prove\s+that)\s+(?P<c>.+)', text)
-    if m2:
-        c = m2.group('c').strip(' "\'').rstrip('.')
-        # stance = la cláusula c; topic = c (o una simplificación)
+    # 2) si el usuario afirma algo directo, usa la cláusula completa como claim
+    if core:
+        c = core.strip(' "\'').rstrip('.')
         return (c, c)
 
-    # 3) fallback: usa todo el mensaje como stance/topic
-    return (text.rstrip('.'), text.rstrip('.'))
+    # 3) fallback
+    c = original.strip(' "\'').rstrip('.')
+    return (c, c)
