@@ -85,7 +85,7 @@ cd kavakChallenge
   In production (Render), persistence can use **Firestore** if `FIREBASE_CREDENTIALS` is set.
 - **Handles long discussions**:  Supports multi-turn conversations with configurable limits.
 - **Response time optimization**: Ensures responses are generated within **30 seconds**.
-- **Multiple debate topics**: Focused on perfumery-related topics (designer vs niche, seasonal use, etc.).
+- **Multiple debate topics**: The bot adapts to any initial claim provided by the user (e.g., Coca-Cola vs Pepsi, flat earth, sports debates, etc.).”
 - **Docker-ready**: Easily run with make run
 
 ---
@@ -259,18 +259,37 @@ The bot supports multiple storage modes:
   - Data persists across restarts via the `redis-data` Docker volume.  
   - Inspect with:
     ```sh
+    # open a shell into the redis container
     docker compose exec redis sh
+
+    # connect with redis-cli (password defined in docker-compose.yml)
     redis-cli -a password
+
+    # list all conversations
     KEYS conv:*
+
+    # inspect messages of a specific conversation
+    LRANGE conv:<id>:messages 0 -1
+
+    # inspect topic/stance metadata
+    HGETALL conv:<id>:meta
+    ```
+
+  - To **exit Redis CLI**, type:
+    ```sh
+    exit
+    ```
+  - To **exit the container shell**, type:
+    ```sh
+    exit
     ```
 
 - **Firestore (prod on Render)**  
   - If `FIREBASE_CREDENTIALS` is provided, conversations persist in Google Firestore.  
-  - Use this for hosted production.
+  - Used in production deployments.
 
 - **Memory (fallback)**  
   - If neither Redis nor Firestore is configured, conversations are stored in memory only (lost on restart).
-
 
 
 
