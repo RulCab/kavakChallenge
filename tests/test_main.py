@@ -22,7 +22,7 @@ os.environ["FIREBASE_CREDENTIALS"] = "/tmp/fake-creds.json"
 
 # Si tu código hace algún check de existencia de archivos, lo neutralizamos:
 with patch("os.path.exists", return_value=True):
-    from main import app  # importa después de setear los envs
+    from app.main import app  # importa después de setear los envs
 
 client = TestClient(app)
 
