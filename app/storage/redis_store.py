@@ -38,3 +38,18 @@ def load_conversation(cid: str) -> List[dict]:
     if not raw:
         return []
     return [json.loads(x) for x in raw]
+
+def _key_meta(cid: str) -> str:
+    return f"conv:{cid}:meta"
+
+def save_meta(cid: str, topic: str, stance: str):
+    key = _key_meta(cid)
+    _redis.hset(key, mapping={"topic": topic, "stance": stance})
+    if settings.redis_ttl_secs:
+        _redis.expire(key, settings.redis_ttl_secs)
+
+def load_meta(cid: str) -> dict:
+    key = _key_meta(cid)
+    data = _redis.hgetall(key)
+    return {"topic": data.get("topic", ""), "stance": data.get("stance", "")}
+
