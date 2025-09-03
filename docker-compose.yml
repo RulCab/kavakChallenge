@@ -4,12 +4,15 @@ services:
     container_name: ai-debate-bot
     ports:
       - "8000:8000"
+    env_file:
+      - .env               
     environment:
-      GEMINI_API_KEY: "${GEMINI_API_KEY:-dummy}"
+      GEMINI_API_KEY: "${GEMINI_API_KEY:-}"              # vacío -> mock
       FIREBASE_CREDENTIALS: "${FIREBASE_CREDENTIALS:-}"
       REDIS_URL: "${REDIS_URL:-redis://:password@redis:6379/0}"
-      REDIS_TTL_SECS: "${REDIS_TTL_SECS:-0}"   # 0 = sin expiración
-      DISABLE_GEMINI: "1"
+      REDIS_TTL_SECS: "${REDIS_TTL_SECS:-0}"
+      DISABLE_GEMINI: "${DISABLE_GEMINI:-1}"             # default mock
+      GEMINI_MODEL: "${GEMINI_MODEL:-gemini-1.5-flash}"
       PYTHONPATH: /app
     volumes:
       - .:/app
