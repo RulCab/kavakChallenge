@@ -13,7 +13,9 @@ from app.services.nlp import extract_topic_from_seed, is_on_topic, ground_reply
 from app.services.llm import generate_gemini_response_async
 
 # seleccionar storage
-if firebase_enabled:
+if settings.redis_url:
+    from app.storage.redis_store import save_conversation, load_conversation
+elif firebase_enabled:
     from app.storage.firestore import save_conversation, load_conversation
 else:
     from app.storage.memory import save_conversation, load_conversation
