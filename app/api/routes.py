@@ -31,7 +31,7 @@ else:
         
 router = APIRouter()
 
-@router.get("/", ... )
+@router.get("/", tags=["meta"], summary="Root")
 def root():
     return {
         "name": "Kopi Debate API",
