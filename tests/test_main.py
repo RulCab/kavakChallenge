@@ -1,21 +1,3 @@
-import os, sys
-from unittest.mock import patch
-from fastapi.testclient import TestClient
-
-# Asegura que el repo root esté en sys.path
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if ROOT not in sys.path:
-    sys.path.insert(0, ROOT)
-
-# ---- Desactiva dependencias externas para tests ----
-os.environ["DISABLE_GEMINI"] = "1"
-os.environ["DISABLE_FIREBASE"] = "1"
-
-from app.main import app
-
-client = TestClient(app)
-
-
 def test_chat_endpoint():
     r = client.post("/chat", json={"message": "Is expensive perfume worth it?"})
     assert r.status_code == 200
