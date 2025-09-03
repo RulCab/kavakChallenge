@@ -45,37 +45,47 @@ def root():
 def health():
     return {"status": "ok"}
 
-@router.post(
-    "/chat",
-    tags=["chat"],
-    response_model=ChatResponse,
-    responses={
-        408: {"model": ErrorResponse, "description": "Generation timeout (≥30s)."},
-        422: {"description": "Payload validation error."},
-        500: {"model": ErrorResponse, "description": "Internal server error."},
-    },
-)
+@router.post("/chat", tags=["chat"], response_model=ChatResponse, responses={
+    408: {"model": ErrorResponse, "description": "Generation timeout (≥30s)."},
+    422: {"description": "Payload validation error."},
+    500: {"model": ErrorResponse, "description": "Internal server error."},
+})
 async def chat(req: MessageRequest):
     cid = req.conversation_id or f"conv_{random.randint(1000, 9999)}"
     history = load_conversation(cid)
 
     if not history:
-        topic = random.choice(TOPICS)
-        seed = f"I will prove that {topic}!"
+        from app.services.nlp import parse_topic_and_stance  # importar aquí evita ciclos
+        topic, stance = parse_topic_and_stance(req.message)
+        # Seed inicial del bot (se planta en la postura)
+        seed = f"I will prove that {stance}!"
         history.append({"role": "bot", "message": seed})
+        # Guarda meta en Redis (si no hay Redis, es no-op y no rompe)
+        save_meta(cid, topic, stance)
+        claim = stance  # lo que vamos a defender siempre
     else:
-        topic = extract_topic_from_seed(history[0]["message"])
+        meta = load_meta(cid)
+        stance = meta.get("stance", "").strip()
+        if not stance:
+            # compatibilidad: si no hay meta (Firestore/memoria), extrae del seed inicial
+            stance = extract_topic_from_seed(history[0]["message"])
+            topic = stance
+        else:
+            topic = meta.get("topic", stance)
+        claim = stance
 
+    # Añade el mensaje del usuario
     history.append({"role": "user", "message": req.message})
 
-    if not is_on_topic(req.message, topic):
-        history.append({"role": "bot", "message": ground_reply(topic)})
+    # Mantente en el tema/claim (usa 'claim' para check y grounding)
+    if not is_on_topic(req.message, claim):
+        history.append({"role": "bot", "message": ground_reply(claim)})
 
     style = random.choice(ARGUMENT_STYLES)
 
     try:
         bot_msg = await asyncio.wait_for(
-            generate_gemini_response_async(topic, req.message, style),
+            generate_gemini_response_async(claim, req.message, style),
             timeout=max(1, settings.max_reply_secs - 2),
         )
     except asyncio.TimeoutError:
