@@ -31,14 +31,14 @@ else:
         
 router = APIRouter()
 
-@router.get("/", tags=["meta"], summary="Root")
+@router.get("/", ... )
 def root():
     return {
         "name": "Kopi Debate API",
         "version": "1.2.0",
         "ready": True,
         "gemini": gemini_enabled,
-        "firebase": firebase_enabled,
+        "storage": "redis" if settings.redis_url else ("firestore" if firebase_enabled else "memory"),
     }
 
 @router.get("/healthz", tags=["meta"], summary="Health")
