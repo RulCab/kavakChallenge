@@ -1,4 +1,4 @@
-# Eau de Debate – AI Argument Bot 💨
+# Eau de Debate – AI Argument Bot 
 
 ## Overview
 This project implements an AI-powered **debate bot** built with **FastAPI**, **Google Gemini API**, and **Redis/Firestore** for persistence.  
@@ -65,8 +65,27 @@ Interactive API docs:
 
  ## Example Usage
 
- Here is a screenshot of a conversation with the bot in action:  
- ![AI Debate Bot in action](bot_in_action.png)
+The bot maintains **strict consistency** with the original claim, even if the user tries to change the subject.
+
+For example, when the claim is **"Cristiano Ronaldo is better than Messi"**:
+
+- If the user asks about something unrelated (e.g., *"What is your opinion on rare medium steaks?"*),  
+  the bot first reminds the user of the claim:
+ *Let's stay on our original claim: Cristiano Ronaldo is better than Messi. I'll address your point strictly in relation to this claim.*
+
+Then it cleverly ties the new topic back to the debate:  
+*"Ah, rare medium steaks. Delightful! Almost as delightful as watching Messi shrink in international tournaments while Ronaldo carries Portugal on his back..."*
+
+![Debate with off-topic redirection](example_offtopic.png)
+
+- If the user later returns to the topic (e.g., *"but Messi won the World Cup"*),  
+the bot drops the reminder and **argues directly** within the claim:  
+*"While Messi's World Cup win is undeniable, let's look at the bigger picture. Cristiano Ronaldo has proven himself across multiple top leagues..."*
+
+![Debate when user returns to the claim](example_ontopic.png)
+
+This demonstrates how the bot **keeps focus, avoids derailment, and always defends its stance**, while still responding to off-topic inputs in a persuasive way.
+
 
 ---
 ## Getting Started
