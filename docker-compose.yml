@@ -9,6 +9,7 @@ services:
       FIREBASE_CREDENTIALS: "${FIREBASE_CREDENTIALS:-}"
       REDIS_URL: "${REDIS_URL:-redis://:password@redis:6379/0}"
       REDIS_TTL_SECS: "${REDIS_TTL_SECS:-0}"   # 0 = sin expiración
+      DISABLE_GEMINI: "1"
       PYTHONPATH: /app
     volumes:
       - .:/app
