@@ -7,7 +7,21 @@ services:
     environment:
       GEMINI_API_KEY: "${GEMINI_API_KEY:-dummy}"
       FIREBASE_CREDENTIALS: "${FIREBASE_CREDENTIALS:-}"
-      PYTHONPATH: /app            
+      REDIS_URL: "${REDIS_URL:-redis://:password@redis:6379/0}"
+      REDIS_TTL_SECS: "${REDIS_TTL_SECS:-0}"   # 0 = sin expiración
+      PYTHONPATH: /app
     volumes:
       - .:/app
+    depends_on:
+      - redis
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+  redis:
+    image: redis:7-alpine
+    container_name: kavak-redis
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "password"]
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:
