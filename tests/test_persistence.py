@@ -1,5 +1,3 @@
-import docker
-
 def test_conversation_persists_in_memory(client):
     # simulamos: mismo CID, varias llamadas
     r1 = client.post("/chat", json={"message": "Coca-Cola > Pepsi"})
