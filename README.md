@@ -1,8 +1,9 @@
-# Eau de Debate – AI Perfume Bot 💨
+# Eau de Debate – AI Argument Bot 💨
 
 ## Overview
-This project implements an AI-powered **perfume debate bot** using **FastAPI**, **Google Gemini API**, and **Firebase Firestore**.  
-The bot is designed to engage in persuasive debates about **perfumery-related topics** (designer vs niche, seasonal use, longevity, etc.), always maintaining a strong stance on predefined claims.
+This project implements an AI-powered **debate bot** built with **FastAPI**, **Google Gemini API**, and **Redis/Firestore** for persistence.  
+The bot is designed to take a **strong stance on any claim provided by the user** (e.g., *“Coca-Cola is better than Pepsi”*, *“The earth is flat”*, *“Winter is superior to summer”*).  
+It maintains consistency across turns, generates persuasive arguments in multiple styles, and keeps conversation history persistent (Redis locally, Firestore or Redis in production).
 
 ## Hosted Version 🚀
 A live instance is available on **Render**:  
@@ -13,15 +14,15 @@ A live instance is available on **Render**:
  You can also test the API directly from your browser using the interactive Swagger UI:  
  👉 [https://kopichallenge.onrender.com/docs](https://kopichallenge.onrender.com/docs)
 
- Steps:
----
+## Steps
+
 >
 > You can maintain the same debate across multiple turns by reusing the `conversation_id`.
 >
 > 1. Send your **first message** without a `conversation_id`, for example:
 >    ```json
 >    {
->      "message": "Convince me that niche perfumes are better than designer ones"
+>      "message": "Convince me that Coca-Cola is better than Pepsi"
 >    }
 >    ```
 > 2. The API will respond with a new `conversation_id`:
@@ -29,9 +30,9 @@ A live instance is available on **Render**:
 >    {
 >      "conversation_id": "conv_4755",
 >      "message": [
->        {"role": "bot", "message": "I will prove that Only vintage batches smell authentic..."},
->        {"role": "user", "message": "Convince me that niche perfumes are better than designer ones"},
->        {"role": "bot", "message": "Across cultures, scents have been tied to rituals..."}
+>        {"role": "bot", "message": "I will prove that Coca-Cola is better than Pepsi!"},
+>        {"role": "user", "message": "Convince me that Coca-Cola is better than Pepsi"},
+>        {"role": "bot", "message": "Coca-Cola has a richer, layered flavor that Pepsi cannot match..."}
 >      ]
 >    }
 >    ```
@@ -39,7 +40,7 @@ A live instance is available on **Render**:
 >    ```json
 >    {
 >      "conversation_id": "conv_4755",
->      "message": "But there are some really good and cheap dupes"
+>      "message": "But Pepsi is cheaper"
 >    }
 >    ```
 > 4. The bot will keep the context and maintain its stance:
@@ -47,11 +48,12 @@ A live instance is available on **Render**:
 >    {
 >      "conversation_id": "conv_4755",
 >      "message": [
->        {"role": "user", "message": "But there are some really good and cheap dupes"},
->        {"role": "bot", "message": "Let's stay on our topic: reformulations ruin perfumes..."}
+>        {"role": "user", "message": "But Pepsi is cheaper"},
+>        {"role": "bot", "message": "Let's stay on our topic: **Coca-Cola is better than Pepsi**. Price doesn’t equal quality..."}
 >      ]
 >    }
 >    ```
+
 >
 > This way, the bot remembers the debate and stays consistent throughout multi-turn conversations.
 
@@ -79,7 +81,8 @@ cd kavakChallenge
 ## Features
 - **Maintains a consistent argument**: The bot never changes its position, regardless of user input.
 - **Persuasive responses**: Uses different argumentation styles (historical, scientific, emotional, sarcastic, practical, philosophical, economic, cultural, humorous and romantic) to convince the user.
-- **Conversation persistence**: Previous messages are stored in Firebase Firestore to maintain a logical flow (fallback: in-memory only).
+- **Conversation persistence**: Stores messages in **Redis** (via Docker volume) for local/dev, with fallback to memory-only.  
+  In production (Render), persistence can use **Firestore** if `FIREBASE_CREDENTIALS` is set.
 - **Handles long discussions**:  Supports multi-turn conversations with configurable limits.
 - **Response time optimization**: Ensures responses are generated within **30 seconds**.
 - **Multiple debate topics**: Focused on perfumery-related topics (designer vs niche, seasonal use, etc.).
@@ -89,6 +92,7 @@ cd kavakChallenge
 ## Technologies Used
 - **FastAPI**: Backend framework for handling API requests.
 - **Google Gemini API**: Generates AI-based debate responses.
+- **Redis**: Local conversation storage with persistence via Docker volumes.
 - **Firebase Firestore**: Stores conversation history.
 - **Docker**: Containerizes the application for deployment.
 - **Makefile**: Automates service management tasks.
@@ -108,6 +112,7 @@ A `Makefile` is provided to simplify the installation, execution, and testing of
 - `make down` - Stops all running services.
 - `make clean` - Removes Docker containers/images/networks.
 ---
+
 ## Environment Variables Setup
 Configuration is managed via a .env file in the root directory.
 An `.env.example` is included for reference:
@@ -116,15 +121,22 @@ An `.env.example` is included for reference:
 GEMINI_API_KEY=your_gemini_api_key_here
 # Firebase credentials path (inside the container)
 FIREBASE_CREDENTIALS=/app/firebase.json
+# Redis config (local by default)
+REDIS_URL=redis://:password@redis:6379/0
+REDIS_TTL_SECS=0
+DISABLE_GEMINI=1
+GEMINI_MODEL=gemini-1.5-flash
 ```
 ---
 ## Notes
 
-- If **`GEMINI_API_KEY`** is missing, the API still runs using a **mock response mode**.  
-- If **`FIREBASE_CREDENTIALS`** is missing or the file is not mounted, the API stores conversations **in memory**.  
-- To enable **Firestore persistence**, obtain a Firebase service account JSON from:  
-*Firebase Console → Project Settings → Service Accounts → Generate new private key*,  
-save it as `firebase.json` in the repo root, and mount it (see below).  
+- If **`GEMINI_API_KEY`** is missing, the API still runs using a **mock response mode** (safe for local dev and tests).  
+- By default, conversation history is stored in **Redis** (containerized with Docker).  
+- If **Redis is not available**, the API falls back to **in-memory storage** (data lost on restart).  
+- Firestore support remains optional:  
+  - To enable **Firestore persistence**, obtain a Firebase service account JSON from:  
+    *Firebase Console → Project Settings → Service Accounts → Generate new private key*  
+    Save it as `firebase.json` in the repo root, and mount it (see below).  
 
 ---
 
@@ -161,17 +173,18 @@ Add the `environment` lines to pass variables (with safe defaults), and mount th
 
 ---
 
- ## API Endpoint
+## API Endpoint
 
- ### `POST /chat`
- Handles user messages and generates AI responses.  
+### `POST /chat`
+Handles user messages and generates AI responses.  
 
- **Request Body:**
- ```json
- {
-   "conversation_id": null,
-   "message": "Tell me why Dior Sauvage is the best!"
- }
+**Request Body:**
+```json
+{
+  "conversation_id": null,
+  "message": "Convince me that Coca-Cola is better than Pepsi"
+}
+
  ```
 
  - `conversation_id` (optional): If not provided, a new conversation is created.  
@@ -180,14 +193,14 @@ Add the `environment` lines to pass variables (with safe defaults), and mount th
 
  **Response:**
  ```json
- {
-   "conversation_id": "conv_1234",
-   "message": [
-     {"role": "bot", "message": "I will prove that Longevity is everything!"},
-     {"role": "user", "message": "Tell me more"},
-     {"role": "bot", "message": "Let's stay on our topic..."}
-   ]
- }
+{
+  "conversation_id": "conv_1234",
+  "message": [
+    {"role": "bot", "message": "I will prove that Coca-Cola is better than Pepsi!"},
+    {"role": "user", "message": "Convince me that Coca-Cola is better than Pepsi"},
+    {"role": "bot", "message": "Coca-Cola has a richer, layered flavor that Pepsi cannot match..."}
+  ]
+}
  ```
 
 ### `GET /healthz`
@@ -237,12 +250,40 @@ Simple health check endpoint to verify that the API is running.
  4 passed in 2.9s
  ```
 
+## Storage Backends
+
+The bot supports multiple storage modes:
+
+- **Redis (default in Docker Compose)**  
+  - Conversations stored in Redis lists (messages) and hashes (topic/stance).  
+  - Data persists across restarts via the `redis-data` Docker volume.  
+  - Inspect with:
+    ```sh
+    docker compose exec redis sh
+    redis-cli -a password
+    KEYS conv:*
+    ```
+
+- **Firestore (prod on Render)**  
+  - If `FIREBASE_CREDENTIALS` is provided, conversations persist in Google Firestore.  
+  - Use this for hosted production.
+
+- **Memory (fallback)**  
+  - If neither Redis nor Firestore is configured, conversations are stored in memory only (lost on restart).
+
+
+
+
  ### Implemented Tests
- - ✅ **Basic Chat Response**: Valid messages return a structured response.  
- - ❌ **Empty Message Handling**: API rejects empty inputs with 400.  
- - ✅ **Conversation History**: Same conversation ID keeps history.  
- - ✅ **Consistency**: Bot does not change stance across multi-turn debates.  
- - ✅ **Last 5 Messages Rule**: When a conversation exceeds 5+ turns, the API response returns **exactly the 5 most recent messages** in correct order, with the bot’s reply always at the end.  
+- ✅ **Basic Chat Response**: Valid messages return structured output.  
+- ✅ **Empty Message Handling**: API rejects empty inputs with 422.  
+- ✅ **Conversation History**: Same conversation ID keeps history.  
+- ✅ **Consistency**: Bot does not change stance across multi-turn debates.  
+- ✅ **Last 5 Messages Rule**: Returns exactly the last 5 messages.  
+- ✅ **Generic Claim Flow**: Bot handles arbitrary claims beyond perfumes.  
+- ✅ **Parser Robustness**: Topic/stance extracted correctly from seed.  
+- ✅ **Redis Persistence**: Messages persist across multiple requests.  
+
 
 ---
 ## Future Improvements
