@@ -14,12 +14,21 @@ from app.services.llm import generate_gemini_response_async
 
 # seleccionar storage
 if settings.redis_url:
-    from app.storage.redis_store import save_conversation, load_conversation
+    from app.storage.redis_store import save_conversation, load_conversation, save_meta, load_meta
 elif firebase_enabled:
     from app.storage.firestore import save_conversation, load_conversation
+    def save_meta(cid: str, topic: str, stance: str):  # no-op
+        pass
+    def load_meta(cid: str) -> dict:
+        return {"topic": "", "stance": ""}
 else:
     from app.storage.memory import save_conversation, load_conversation
-
+    # no-op meta en memoria (para no romper la firma)
+    def save_meta(cid: str, topic: str, stance: str):
+        pass
+    def load_meta(cid: str) -> dict:
+        return {"topic": "", "stance": ""}
+        
 router = APIRouter()
 
 @router.get("/", tags=["meta"], summary="Root")
