@@ -45,7 +45,16 @@ def root():
 def health():
     return {"status": "ok"}
 
-@router.post("/chat", tags=["chat"], response_model=ChatResponse, responses={...})
+@router.post(
+    "/chat",
+    tags=["chat"],
+    response_model=ChatResponse,
+    responses={
+        408: {"model": ErrorResponse, "description": "Generation timeout (≥30s)."},
+        422: {"description": "Payload validation error."},
+        500: {"model": ErrorResponse, "description": "Internal server error."},
+    },
+)
 async def chat(req: MessageRequest):
     cid = req.conversation_id or f"conv_{random.randint(1000, 9999)}"
     history = load_conversation(cid)
