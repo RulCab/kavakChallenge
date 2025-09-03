@@ -12,10 +12,10 @@ def is_on_topic(user_msg: str, topic: str) -> bool:
     msg_kw = {w.lower() for w in user_msg.split() if len(w) > 3}
     return len(topic_kw & msg_kw) >= max(1, len(topic_kw) // 6)
 
-def ground_reply(topic: str) -> str:
+def ground_reply(topic_or_claim: str) -> str:
     return (
-        f"Let's stay on our topic: **{topic}**. "
-        "I’ll address your point strictly in relation to this claim."
+        f"Let's stay on our original claim: **{topic_or_claim}**. "
+        "I'll address your point strictly in relation to this claim."
     )
 
 def build_prompt(topic: str, user_message: str, style: str) -> str:
